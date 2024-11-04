@@ -1,0 +1,42 @@
+/* custom-tree.css */
+
+.node__root > circle {
+    fill: rgb(9, 77, 236);
+  }
+
+
+  
+  .node__branch > circle {
+    fill: rgb(18, 184, 217);
+  }
+  
+  .node__leaf > circle {
+    fill: rgb(6, 209, 111);
+    /* Increase the radius of leaf nodes */
+    r: 40;
+  }
+  
+  .node__root text,
+  .node__branch text{
+    fill: #ffffff; /* Make text color white for better contrast */
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  .node__leaf text {
+    fill: #ffffff;
+    transform: rotate(90deg);
+    transform-origin: left center;
+  }
+  
+
+  .link__white {
+    stroke: white; /* Set the branch line color to white */
+    stroke-width: 2px; /* Adjust the thickness if needed */
+  }
+
+  .link__base {
+    stroke: white !important; /* Ensure the lines are white */
+    stroke-width: 2px !important; /* Adjust the thickness if needed */
+  }
+  
