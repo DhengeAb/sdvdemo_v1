@@ -675,7 +675,7 @@ useEffect(() => {
           </Box>
           
           {/* Actions Section */}
-          <Accordion defaultExpanded>
+          <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon style={{ color: '#ffffff' }} />} sx={{ backgroundColor: '#000000', color: '#ffffff' }}>
             <Typography>Actions</Typography>
           </AccordionSummary>
