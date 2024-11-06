@@ -85,7 +85,7 @@ const ViewDroplets = () => {
                         <CardItem translateZ={50} className="text-center mb-2">
                             <h3 className="text-xl font-bold mb-2">{droplet.scenario_name}</h3>
                         </CardItem>
-                        <CardItem translateZ={30} className="text-gray-600 dark:text-gray-300 mb-4 h-12 overflow-hidden">
+                        <CardItem translateZ={30} className="text-black mb-4 h-12 overflow-hidden">
                             <p>{droplet.description}</p>
                         </CardItem>
                         <CardItem translateZ={10} className="flex justify-center items-center mb-4 flex-grow">
