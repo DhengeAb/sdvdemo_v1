@@ -31,11 +31,14 @@ const DropletJsonPreview = ({
         type: 'TimeCondition',
         parameters: condition.parameters || { defaultParam: 'exampleValue' }
       })),
-      actions: selectedAPIs.map(api => ({
+      actions: selectedAPIs.map((api, index) => ({
+        id: `action_${index.toString().padStart(3, '0')}`,
         type: 'VSSSignalAction',
-        vss_signal: api.vssPath || null,
-        value: api.value || null
-      })),
+        vss_signal: api.vss_signal || "default_signal_path",
+        value: typeof api.value,
+        target: "telematics"
+    }))
+    ,
       metadata: {
         icon_url: dropletMetadata.pictureUrl || null,
       },

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchDroplets, deleteDroplet } from '../Data/storedDroplets';
 import { CardContainer, CardBody, CardItem } from './3d-card';
-import { Button, Dialog, DialogTitle, DialogContent, DialogActions,IconButton } from '@mui/material';
+import { Button, Dialog, DialogTitle, DialogContent, DialogActions,IconButton ,CircularProgress} from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import AppBarComponent from './AppBarComponents';  // Ensure the path is correct
 
@@ -11,13 +11,26 @@ const ViewDroplets = () => {
     const [selectedDroplet, setSelectedDroplet] = useState(null);
     const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
+
+
+    // useEffect(() => {
+    //     const getDroplets = async () => {
+    //         const fetchedDroplets = await fetchDroplets();
+    //         setDroplets(fetchedDroplets);
+    //     };
+
+    //     getDroplets();
+    // }, []);
 
     useEffect(() => {
         const getDroplets = async () => {
+            setIsLoading(true); // Set loading true before fetching
             const fetchedDroplets = await fetchDroplets();
             setDroplets(fetchedDroplets);
+            setIsLoading(false); // Set loading false after fetching
         };
-
+    
         getDroplets();
     }, []);
 
@@ -58,12 +71,16 @@ const ViewDroplets = () => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
 
-
-            {droplets.map((droplet, index) => (
+{isLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100%' ,paddingLeft:'500px'}}>
+                <CircularProgress />
+            </div>
+        ) : (
+            droplets.map((droplet, index) => (
                 
                 <CardContainer key={index} containerClassName="w-full">
 
-                    <CardBody className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col justify-between h-[400px] w-[300px] relative">
+                    <CardBody className="bg-white  rounded-lg shadow-lg p-4 flex flex-col justify-between h-[400px] w-[300px] relative">
 
                         <CardItem translateZ={50} className="text-center mb-2">
                             <h3 className="text-xl font-bold mb-2">{droplet.scenario_name}</h3>
@@ -115,7 +132,7 @@ const ViewDroplets = () => {
 </div>
                     </CardBody>
                 </CardContainer>
-            ))}
+            )))}
 
             {/* Details Dialog */}
             <Dialog open={isDetailsDialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>

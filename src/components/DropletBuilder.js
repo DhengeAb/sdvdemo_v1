@@ -82,14 +82,26 @@ const DropletBuilder = () => {
     const [fetchedConditions, setFetchedConditions] = useState([]);
 
     const handleSubmitDroplet = async () => {
+      const formattedActions = selectedAPIs.map(action => ({
+        id: action.id,
+        type: action.type,
+        vss_signal: action.vss_signal,
+        value: {  // Simplified to match your intended structure
+          message: action.value.message,
+          severity: action.value.severity,
+          value: action.value.value
+        },
+        target: action.target
+      }));
+  
       const requestBody = {
           Type: "Update",
-          ID: dropletMetadata.id, // Assuming `id` is stored in dropletMetadata
+          ID: dropletMetadata.id,
           body: {
               Type: "Scenario",
               scenario_name: dropletMetadata.name,
               description: dropletMetadata.description,
-              version: "1.0", // Example version, adjust as necessary
+              version: "1.0",
               created_time: dropletMetadata.created_time, // Make sure this is managed correctly on create vs update
               updated_time: new Date().toISOString(),
               triggers: selectedTriggers.map(trigger => ({
@@ -100,17 +112,22 @@ const DropletBuilder = () => {
                   value: trigger.value,
                   conditions: trigger.conditions || {} // Assuming conditions are part of triggers
               })),
-              actions: selectedAPIs.map(api => ({
-                  id: api.id,
-                  type: api.type,
-                  vss_signal: api.vss_signal,
-                  value: api.value
+              actions: selectedAPIs.map((api, index) => ({
+                id: `action_${index.toString().padStart(3, '0')}`,
+                type: 'VSSSignalAction',
+                vss_signal: api.vss_signal || "default_signal_path",
+                value:  {  // Ensure value is treated correctly, avoid double nesting
+                  message: api.value.message || 'Default message Set',
+                  severity: api.value.severity || "Normal",
+                  value: api.value.value|| "default_value"
+                },
+                target: api.target
               })),
               metadata: {
                   approval: true,
                   staging: false,
-                  tags: dropletMetadata.tags || ["default"], // Assuming tags are part of metadata
-                  icon_url: dropletMetadata.icon_url,
+                  tags: dropletMetadata.tags || ["default"],
+                  icon_url: dropletMetadata.pictureUrl,
                   image_url: dropletMetadata.pictureUrl,
                   author: "System",
                   category: dropletMetadata.category || "General",
@@ -132,60 +149,119 @@ const DropletBuilder = () => {
       const response = await updateDroplet(requestBody);
       if (response) {
           alert("Droplet updated successfully!");
-          // Additional handling here (e.g., clear form, navigate away)
-          setDropletMetadata({ name: '', id: '', description: '', pictureUrl: '' });
-          setSelectedAPIs([]);
-          setSelectedTriggers([]);
-          setSelectedConditions([]);
-          setSelectedVehicles([]);
-          setJsonContent('{}'); // Reset the JSON content
+          // Reset all fields here or navigate away
+          resetDropletForm();
       } else {
           alert("Failed to update droplet. Please try again.");
       }
   };
   
+
+  
+  
+//   const handleSubmitDroplet = async () => {
+//     const formatActions = (actions) => actions.map(action => ({
+//         id: action.id,
+//         type: action.type,
+//         vss_signal: action.vss_signal,
+//         value: action.value, // Ensure it uses the corrected value structure
+//         target: action.target
+//     }));
+
+//     const requestBody = {
+//         Type: "Update",
+//         ID: dropletMetadata.id,
+//         body: {
+//             Type: "Scenario",
+//             scenario_name: dropletMetadata.name,
+//             description: dropletMetadata.description,
+//             version: "1.0",
+//             created_time: new Date().toISOString(),
+//             updated_time: new Date().toISOString(),
+//             triggers: selectedTriggers,
+//             actions: formatActions(selectedAPIs),
+//             metadata: {
+//                 ...dropletMetadata,
+//                 image_url: dropletMetadata.pictureUrl
+//             }
+//         }
+//     };
+
+//     const response = await updateDroplet(requestBody);
+//     if (response) {
+//         alert("Droplet updated successfully!");
+//         resetDropletForm();
+//     } else {
+//         alert("Failed to update droplet. Please try again.");
+//     }
+// };
+
+const resetDropletForm = () => {
+    setDropletMetadata({ name: '', id: '', description: '', pictureUrl: '' });
+    setSelectedAPIs([]);
+    setSelectedTriggers([]);
+    setSelectedConditions([]);
+    setSelectedVehicles([]);
+    setJsonContent('{}'); // Reset the JSON content
+};
+
+
     
 
 
   
 
 
-  const getDynamicTreeData = () => {
-    const extractVssAndValue = (item) => {
-      const { vss_signal, value } = item;
-      return [
-        { name: `vss_signal: ${vss_signal || 'N/A'}` },
-        { name: `value: ${value || 'N/A'}` }
-      ];
-    };
+const getDynamicTreeData = () => {
+  // Helper function to extract and format VSS signal and value data
+  const extractVssAndValue = (item) => {
+    const { vss_signal, value } = item;
+    const subValues = [];
 
-    return {
-      name: "root",
-      children: [
-        {
-          name: "Actions",
-          children: selectedAPIs.map((api, idx) => ({
-            name: `Action ${idx + 1}`,
-            children: extractVssAndValue(api),
-          })),
-        },
-        {
-          name: "Triggers",
-          children: selectedTriggers.map((trigger, idx) => ({
-            name: `Trigger ${idx + 1}`,
-            children: extractVssAndValue(trigger),
-          })),
-        },
-        {
-          name: "Conditions",
-          children: selectedConditions.map((condition, idx) => ({
-            name: `Condition ${idx + 1}`,
-            children: extractVssAndValue(condition),
-          })),
-        },
-      ],
-    };
+    // Add VSS signal information
+    subValues.push({ name: `vss_signal: ${vss_signal || 'N/A'}` });
+
+    // Check if value is an object and handle its properties
+    if (typeof value === 'object' && value !== null) {
+      subValues.push({ name: `message: ${value.message || 'No message provided'}` });
+      subValues.push({ name: `severity: ${value.severity || 'No severity provided'}` });
+      subValues.push({ name: `value: ${value.value || 'No value provided'}` });
+    } else {
+      // Handle the case where value might not be an object or is null/undefined
+      subValues.push({ name: `value: ${value || 'N/A'}` });
+    }
+
+    return subValues;
   };
+
+  // Function to create tree data from the state of APIs, triggers, and conditions
+  return {
+    name: "root",
+    children: [
+      {
+        name: "Actions",
+        children: selectedAPIs.map((api, idx) => ({
+          name: `Action ${idx + 1}`,
+          children: extractVssAndValue(api),
+        })),
+      },
+      {
+        name: "Triggers",
+        children: selectedTriggers.map((trigger, idx) => ({
+          name: `Trigger ${idx + 1}`,
+          children: extractVssAndValue(trigger),
+        })),
+      },
+      {
+        name: "Conditions",
+        children: selectedConditions.map((condition, idx) => ({
+          name: `Condition ${idx + 1}`,
+          children: extractVssAndValue(condition),
+        })),
+      },
+    ],
+  };
+};
 
   // Fetch Scenario-Actions data from the new API endpoint
 const fetchScenarioActions = async () => {
@@ -208,96 +284,188 @@ const location = useLocation();
 const droplet = location.state?.droplet; 
 const isEditMode = Boolean(droplet);
 
+// useEffect(() => {
+//   if (droplet) {
+//       setDropletMetadata({
+//           name: droplet.scenario_name,
+//           id: droplet.ID,
+//           description: droplet.description,
+//           pictureUrl: droplet.metadata?.image_url || '',
+//       });
+//       setSelectedAPIs(droplet.actions || []);
+//       setSelectedTriggers(droplet.triggers || []);
+//       setSelectedConditions(droplet.conditions || []);
+//   }
+// }, [droplet]);
+
 useEffect(() => {
   if (droplet) {
-      setDropletMetadata({
-          name: droplet.scenario_name,
-          id: droplet.ID,
-          description: droplet.description,
-          pictureUrl: droplet.metadata?.image_url || '',
-      });
-      setSelectedAPIs(droplet.actions || []);
-      setSelectedTriggers(droplet.triggers || []);
-      setSelectedConditions(droplet.conditions || []);
+    const formattedActions = droplet.actions?.map(action => ({
+      id: action.id,
+      type: action.type,
+      vss_signal: action.vss_signal,
+      value: {
+        message: action.value.message || "Default message",
+        severity: action.value.severity || "Normal",
+        value: action.value.value || "OPEN"  // Assuming 'OPEN' is a default or fallback value
+      },
+      target: action.target
+    })) || [];
+
+         setDropletMetadata({
+                      name: droplet.scenario_name,
+            id: droplet.ID,
+           description: droplet.description,
+           pictureUrl: droplet.metadata?.image_url || '',
+       });
+
+    setSelectedAPIs(formattedActions);
+    setSelectedTriggers(droplet.triggers || []);
+    setSelectedConditions(droplet.conditions || []);
   }
 }, [droplet]);
 
 
 
-  useEffect(() => {
-    try {
-      // Build the base JSON structure
-      const updatedJson = {
-        ID: dropletMetadata.id || "scenario_005",
-        Type:"Scenario",
-        scenario_name: dropletMetadata.name || "Overspeed Alert",
-        description: dropletMetadata.description || "Alerts the driver when the vehicle speed exceeds 80 km/h.",
-        version: "1.0",
-        created_time: "2024-09-22T10:00:00.000Z",
-        updated_time: null,
-        "Vehicle Models": selectedVehicles.length > 0 ? selectedVehicles.join(", ") : "Nexon, Harrier",
-        metadata: {
-          approval: true,
-          staging: false,
-          tags: ["safety", "speed", "alert"],
-          icon_url: "https://example.com/icons/overspeed_alert.png",
-          image_url: dropletMetadata.pictureUrl || null,
-          author: "System",
-          category: "Safety",
-          priority: 1,
-          popularity: 75,
-          subscription_required: false,
-          free: true,
-          most_used: true,
-          version_history: [],
-          scenario_source: "preset",
-          scenario_lifecycle: "unlimited",
-          scenario_display_config: "visible",
-          scenario_type: "system"
-        }
-      };
-  
-      // Conditionally add 'triggers' if there are any selectedTriggers
-      if (selectedTriggers.length > 0) {
-        updatedJson.triggers = selectedTriggers.map(trigger => ({
-          id: trigger.id || "trigger_030",
-          type: trigger.type || "VSSSignalTrigger",
-          vss_signal: trigger.vss_signal || "Vehicle.Speed",
-          operator: trigger.operator || ">",
-          value: trigger.value || 80
-        }));
-      }
-  
-      // Conditionally add 'conditions' if there are any selectedConditions
-      if (selectedConditions.length > 0) {
-        updatedJson.conditions = selectedConditions.map(condition => ({
-          id: condition.id || "condition_010",
-          type: condition.type || "TimeCondition",
-          parameters: {
-            start_time: condition.parameters?.start_time || "06:00",
-            end_time: condition.parameters?.end_time || "22:00"
-          }
-        }));
-      }
-  
-      // Conditionally add 'actions' if there are any selectedAPIs
-      if (selectedAPIs.length > 0) {
-        updatedJson.actions = selectedAPIs.map(action => ({
-          id: action.id || "action_030",
-          type: action.type || "VSSSignalAction",
-          vss_signal: action.vss_signal || "Vehicle.Cabin.Infotainment.Alert",
-          value: action.value || "xyz"
-        }));
-      }
-  
-      setJsonContent(JSON.stringify(updatedJson, null, 2));
-    } catch (error) {
-      console.error("Error generating JSON:", error);
-      setJsonContent('{}'); // Fallback to empty JSON object
-    }
-  }, [dropletMetadata, selectedAPIs, selectedTriggers, selectedConditions, selectedVehicles]);
+
+
+useEffect(() => {
+  console.log("Metadata: ", dropletMetadata);
+  console.log("APIs: ", selectedAPIs);
+  console.log("Triggers: ", selectedTriggers);
+  console.log("Conditions: ", selectedConditions);
+}, [dropletMetadata, selectedAPIs, selectedTriggers, selectedConditions]);
+
+
+
+// useEffect(() => {
+//   try {
+//     // Build the base JSON structure
+//     const updatedJson = {
+//       ID: dropletMetadata.id,
+//       Type: "Scenario",
+//       scenario_name: dropletMetadata.name,
+//       description: dropletMetadata.description || "Add droplet description here",
+//       version: "1.0",
+//       created_time: new Date().toISOString(),
+//       updated_time: null,
+//       "Vehicle Models": selectedVehicles.length > 0 ? selectedVehicles.join(", ") : "Nexon, Harrier",
+//       metadata: {
+//         approval: true,
+//         staging: false,
+//         tags: ["safety", "speed", "alert"],
+//         icon_url: dropletMetadata.pictureUrl || null,
+//         image_url: dropletMetadata.pictureUrl || null,
+//         author: "System",
+//         category: "Safety",
+//         priority: 1,
+//         popularity: 75,
+//         subscription_required: false,
+//         free: true,
+//         most_used: true,
+//         version_history: [],
+//         scenario_source: "preset",
+//         scenario_lifecycle: "unlimited",
+//         scenario_display_config: "visible",
+//         scenario_type: "system"
+//       },
+//       triggers: selectedTriggers.map(trigger => ({
+//         id: trigger.id || "trigger_030",
+//         type: trigger.type || "VSSSignalTrigger",
+//         vss_signal: trigger.vss_signal || "Vehicle.Speed",
+//         operator: trigger.operator || ">",
+//         value: trigger.value || 80
+//       })),
+//       conditions: selectedConditions.map(condition => ({
+//         id: condition.id || "condition_010",
+//         type: condition.type || "TimeCondition",
+//         parameters: condition.parameters || {
+//           start_time: "06:00",
+//           end_time: "22:00"
+//         }
+//       })),
+//       actions: selectedAPIs.map((api, index) => ({
+//         id: `action_${index.toString().padStart(3, '0')}`,
+//         type: 'VSSSignalAction',
+//         vss_signal: api.vss_signal || "default_signal_path",
+//         value:  {  // Ensure value is treated correctly, avoid double nesting
+//           message: api.description || 'Default message Set',
+//           severity: api.value.severity || "Normal",
+//           value: api.value|| "default_value"
+//         },
+//         target: "telematics"
+//       }))
+//     };
+
+//     setJsonContent(JSON.stringify(updatedJson, null, 2));
+//   } catch (error) {
+//     console.error("Error generating JSON:", error);
+//     setJsonContent('{}');  // Fallback to empty JSON object
+//   }
+// }, [dropletMetadata, selectedAPIs, selectedTriggers, selectedConditions, selectedVehicles]);
+
+
+
 
 // Filter Actions based on search input
+
+useEffect(() => {
+  try {
+    const updatedJson = {
+      ID: dropletMetadata.id,
+      Type: "Scenario",
+      scenario_name: dropletMetadata.name,
+      description: dropletMetadata.description || "Add droplet description here",
+      version: "1.0",
+      created_time: isEditMode ? dropletMetadata.created_time : new Date().toISOString(),
+      updated_time: new Date().toISOString(),
+      "Vehicle Models": selectedVehicles.length > 0 ? selectedVehicles.join(", ") : "Nexon, Harrier",
+      metadata: {
+        approval: true,
+        staging: false,
+        tags: ["safety", "speed", "alert"],
+        icon_url: dropletMetadata.pictureUrl || null,
+        image_url: dropletMetadata.pictureUrl || null,
+        author: "System",
+        category: "Safety",
+        priority: 1,
+        popularity: 75,
+        subscription_required: false,
+        free: true,
+        most_used: true,
+        version_history: [],
+        scenario_source: "preset",
+        scenario_lifecycle: "unlimited",
+        scenario_display_config: "visible",
+        scenario_type: "system"
+      },
+      triggers: selectedTriggers.map(trigger => ({
+        id: trigger.id || "trigger_030",
+        type: trigger.type || "VSSSignalTrigger",
+        vss_signal: trigger.vss_signal || "Vehicle.Speed",
+        operator: trigger.operator || ">",
+        value: trigger.value || 80
+      })),
+      conditions: selectedConditions.map(condition => ({
+        id: condition.id || "condition_010",
+        type: condition.type || "TimeCondition",
+        parameters: condition.parameters || {
+          start_time: "06:00",
+          end_time: "22:00"
+        }
+      })),
+      actions: selectedAPIs.map(formatAction)
+    };
+
+    setJsonContent(JSON.stringify(updatedJson, null, 2));
+  } catch (error) {
+    console.error("Error generating JSON:", error);
+    setJsonContent('{}');  // Fallback to empty JSON object
+  }
+}, [dropletMetadata, selectedAPIs, selectedTriggers, selectedConditions, selectedVehicles, isEditMode]);  // Added isEditMode to the dependency array
+
+
+
 useEffect(() => {
   setFilteredAPIs(fetchedAPIs.filter(api => api.API_Name.toLowerCase().includes(apiSearch.toLowerCase())));
 }, [apiSearch, fetchedAPIs]);
@@ -317,20 +485,20 @@ useEffect(() => {
     fetchScenarioActions();
   }, []);
 
-  useEffect(() => {
-    if (droplet) {
-        setDropletMetadata({
-            name: droplet.scenario_name,
-            id: droplet.ID,
-            description: droplet.description,
-            pictureUrl: droplet.metadata?.image_url || '',
-        });
-        setSelectedAPIs(droplet.actions || []);
-        setSelectedTriggers(droplet.triggers || []);
-        setSelectedConditions(droplet.conditions || []);
-        // Initialize other state variables if needed
-    }
-}, [droplet]);
+//   useEffect(() => {
+//     if (droplet) {
+//         setDropletMetadata({
+//             name: droplet.scenario_name,
+//             id: droplet.ID,
+//             description: droplet.description,
+//             pictureUrl: droplet.metadata?.image_url || '',
+//         });
+//         setSelectedAPIs(droplet.actions || []);
+//         setSelectedTriggers(droplet.triggers || []);
+//         setSelectedConditions(droplet.conditions || []);
+//         // Initialize other state variables if needed
+//     }
+// }, [droplet]);
 
   
 
@@ -390,27 +558,55 @@ useEffect(() => {
   };
   
   
+  // const addItemToSelected = (type, item) => {
+  //   const addToState = (prevSelected, valueInput) => {
+  //     const exists = prevSelected.find(a => a.UUID === item.UUID);
+  //     if (exists) {
+  //       return prevSelected;
+  //     }
+  
+  //     // Attach the input value to the item before adding
+  //     const itemWithValue = { ...item, value: valueInput[item.UUID] || item.value };
+  //     return [...prevSelected, itemWithValue];
+  //   };
+  
+  //   if (type === 'api') {
+  //     setSelectedAPIs(prevState => addToState(prevState, apiValueInput));
+  //   } else if (type === 'trigger') {
+  //     setSelectedTriggers(prevState => addToState(prevState, triggerValueInput));
+  //   } else if (type === 'condition') {
+  //     setSelectedConditions(prevState => addToState(prevState, conditionValueInput));
+  //   }
+  // };
+ 
+
   const addItemToSelected = (type, item) => {
     const addToState = (prevSelected, valueInput) => {
-      const exists = prevSelected.find(a => a.UUID === item.UUID);
-      if (exists) {
-        return prevSelected;
-      }
-  
-      // Attach the input value to the item before adding
-      const itemWithValue = { ...item, value: valueInput[item.UUID] || item.value };
-      return [...prevSelected, itemWithValue];
+        const exists = prevSelected.find(a => a.UUID === item.UUID);
+        if (exists) {
+            return prevSelected.map(a => 
+                a.UUID === item.UUID ? {...a, value: valueInput[item.UUID] || a.value } : a
+            );
+        }
+
+        // Attach the input value to the item before adding
+        const itemWithValue = {
+            ...item,
+            value: valueInput[item.UUID] || item.value
+        };
+        return [...prevSelected, itemWithValue];
     };
-  
+
     if (type === 'api') {
-      setSelectedAPIs(prevState => addToState(prevState, apiValueInput));
+        setSelectedAPIs(prevState => addToState(prevState, apiValueInput));
     } else if (type === 'trigger') {
-      setSelectedTriggers(prevState => addToState(prevState, triggerValueInput));
+        setSelectedTriggers(prevState => addToState(prevState, triggerValueInput));
     } else if (type === 'condition') {
-      setSelectedConditions(prevState => addToState(prevState, conditionValueInput));
+        setSelectedConditions(prevState => addToState(prevState, conditionValueInput));
     }
-  };
-  
+};
+
+
   
   
   
@@ -449,20 +645,101 @@ useEffect(() => {
   };
   
 
-  const handleJsonEdit = (edit) => {
-    // This function is called when the JSON is edited
-    setJsonContent(JSON.stringify(edit.updated_src, null, 2));
-    // Here, also update the state that reflects the edits
-    const updatedData = edit.updated_src;
-    setDropletMetadata({
-        name: updatedData.scenario_name || '',
-        id: updatedData.ID || '',
-        description: updatedData.description || '',
-        pictureUrl: updatedData.metadata?.image_url || ''
-    });
-    setSelectedAPIs(updatedData.actions || []);
-    setSelectedTriggers(updatedData.triggers || []);
-    setSelectedConditions(updatedData.conditions || []);
+//   const handleJsonEdit = (edit) => {
+//     // This function is called when the JSON is edited
+//     setJsonContent(JSON.stringify(edit.updated_src, null, 2));
+//     // Here, also update the state that reflects the edits
+//     const updatedData = edit.updated_src;
+//     setDropletMetadata({
+//         name: updatedData.scenario_name || '',
+//         id: updatedData.ID || '',
+//         description: updatedData.description || '',
+//         pictureUrl: updatedData.metadata?.image_url || ''
+//     });
+//     setSelectedAPIs(updatedData.actions || []);
+//     setSelectedTriggers(updatedData.triggers || []);
+//     setSelectedConditions(updatedData.conditions || []);
+// };
+
+const formatAction = (api, index) => {
+  return {
+    id: isEditMode ? api.id : `action_${index.toString().padStart(3, '0')}`,
+    type: 'VSSSignalAction',
+    vss_signal: api.vss_signal || "default_signal_path",
+    value: {
+      message: isEditMode ? api.value.message : api.description || 'Default message Set',
+      severity: api.value.severity || "Normal",
+      value: isEditMode ? api.value.value : api.value || "default_value"
+    },
+    target: api.target || "telematics"
+  };
+};
+
+
+
+// const handleJsonEdit = (edit) => {
+//   const updatedData = edit.updated_src;
+//   console.log("Received updated data from JSON edit:", updatedData);
+
+//   // Log the structure of actions to verify their properties
+//   if (updatedData.actions && updatedData.actions.length > 0) {
+//     console.log("Actions detail:", updatedData.actions);
+//   }
+
+//   setJsonContent(JSON.stringify(updatedData, null, 2));
+
+//   setDropletMetadata({
+//       name: updatedData.scenario_name || '',
+//       id: updatedData.ID || '',
+//       description: updatedData.description || '',
+//       pictureUrl: updatedData.metadata?.image_url || ''
+//   });
+
+//   // Ensure action mapping correctly interprets the action structure
+//   setSelectedAPIs(updatedData.actions?.map(action => ({
+//       id: action.id,
+//       type: action.type,
+//       vss_signal: action.vss_signal,
+//       value: {
+//           message: action.value.message,
+//           severity: action.value.severity,
+//           value: action.value.value
+//       },  // This assumes 'value' is an object with 'message', 'severity', and 'value' properties
+//       target: action.target
+//   })) || []);
+
+//   setSelectedTriggers(updatedData.triggers || []);
+//   setSelectedConditions(updatedData.conditions || []);
+// };
+
+const handleJsonEdit = (edit) => {
+  const updatedData = edit.updated_src;
+  console.log("Received updated data from JSON edit:", updatedData);
+
+  setJsonContent(JSON.stringify(updatedData, null, 2));
+
+  setDropletMetadata({
+      name: updatedData.scenario_name || '',
+      id: updatedData.ID || '',
+      description: updatedData.description || '',
+      pictureUrl: updatedData.metadata?.image_url || ''
+  });
+
+  // Process actions dynamically considering add, edit, and delete scenarios
+  setSelectedAPIs(updatedData.actions?.map(action => ({
+      id: action.id || `action_${new Date().getTime()}`, // Assign a temporary new ID if missing
+      type: action.type,
+      vss_signal: action.vss_signal,
+      value: action.value ? {
+          message: action.value.message || 'No message provided',
+          severity: action.value.severity || "Normal",
+          value: action.value.value || 'No specific value'
+      } : {},  // Safeguard against undefined 'value'
+      target: action.target || 'Default target'  // Provide a default target if none specified
+  })) || []);
+
+  setSelectedTriggers(updatedData.triggers || []);
+  setSelectedConditions(updatedData.conditions || []);
 };
 
 
@@ -588,22 +865,32 @@ useEffect(() => {
   const handleCreateDroplet = async () => {
     // Prepare the droplet data based on the current state
     const dropletData = {
-      ID: dropletMetadata.id || "scenario_005",
+      ID: dropletMetadata.id,
       Type:"Scenario",
-      scenario_name: dropletMetadata.name || "Overspeed Alert",
-      description: dropletMetadata.description || "Alerts the driver when the vehicle speed exceeds 80 km/h.",
+      scenario_name: dropletMetadata.name ,
+      description: dropletMetadata.description || "Add Droplet Description Here.",
       version: "1.0",
       created_time: new Date().toISOString(), // use the current time
       updated_time: null,
       "Vehicle Models": selectedVehicles.length > 0 ? selectedVehicles.join(", ") : "Nexon, Harrier",
       triggers: selectedTriggers,
       conditions: selectedConditions,
-      actions: selectedAPIs,
+      actions: selectedAPIs.map((api, index) => ({
+        id: `action_${index.toString().padStart(3, '0')}`, // This generates id as action_001, action_002, etc.
+        type: 'VSSSignalAction',
+        vss_signal: api.vss_signal || "default_signal_path", // Default path if none specified
+        value: {
+          message: `${api.description || 'Default message'} Set`, // Assuming 'description' or some similar field is available
+          severity: "Normal", // This might be static or dynamic based on your application's logic
+          value: api.value || "default_value" // Default value if none specified
+        },
+        target: api.target || "telematics" // Assuming this is static; adjust as needed
+      })),
       metadata: {
         approval: true,
         staging: false,
         tags: ["safety", "speed", "alert"],
-        icon_url: dropletMetadata.pictureUrl || "https://example.com/icons/overspeed_alert.png",
+        icon_url: dropletMetadata.pictureUrl || null,
         image_url: dropletMetadata.pictureUrl || null,
         author: "System",
         category: "Safety",
@@ -705,9 +992,9 @@ useEffect(() => {
                   <Typography sx={{ flexGrow: 1, color: '#ffffff' }}>{api.API_Name}</Typography>
                   <IconButton sx={{ color: '#ffffff' }}>{expandedAPIs[api.UUID] ? <ChevronDownIcon /> : <ChevronRightIcon />}</IconButton>
                 </Box>
-                <IconButton onClick={() => isItemSelected('api', api.UUID) ? removeItemFromSelected('api', api.UUID) : addItemToSelected('api', api)} sx={{ color: '#ffffff', marginLeft: 1 }}>
+                {/* <IconButton onClick={() => isItemSelected('api', api.UUID) ? removeItemFromSelected('api', api.UUID) : addItemToSelected('api', api)} sx={{ color: '#ffffff', marginLeft: 1 }}>
                   {isItemSelected('api', api.UUID) ? <RemoveIcon /> : <AddIcon />}
-                </IconButton>
+                </IconButton> */}
                 {renderDescriptionBox(api, 'api', apiValueInput, expandedAPIs[api.UUID])}
               </Box>
             ))}
@@ -812,7 +1099,7 @@ useEffect(() => {
 >
   
   {/* Toggle Button to switch views */}
-  <Box sx={{ width: '55%', padding: 2, backgroundColor: '#1e1e1e', display: 'flex', flexDirection: 'column' }}>
+   <Box sx={{width: '55%', padding: 2, backgroundColor: '#1e1e1e', display: 'flex', flexDirection: 'column' }}>
     <FormControlLabel
       control={<Switch checked={showTreeView} onChange={handleToggleView} />}
       label={showTreeView ? "Tree View" : "JSON View"}
@@ -820,7 +1107,9 @@ useEffect(() => {
         color: '#ffffff',
       }}
     />
-  </Box>
+  </Box> 
+
+
 
   {/* Conditionally Render JSON Viewer or Tree */}
   {!showTreeView ? (
@@ -879,7 +1168,7 @@ useEffect(() => {
     
   }}
 >
-  <Card
+  {/* <Card
     sx={{
       height: '300px',
       paddingBottom:'1px',
@@ -906,20 +1195,77 @@ useEffect(() => {
           borderRadius: '5px',
           marginBottom: '10px',
           marginLeft:'60px', // Add space between image and text
-          
+          alignContent:'center'
         }}
       />
       <Typography variant="h6">{dropletMetadata.name}</Typography>
       <Typography variant="body2">{dropletMetadata.description}</Typography>
     </CardContent>
-  </Card>
+  </Card> */}
+<Card
+  sx={{
+    height: '300px',
+    paddingBottom: '1px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: dropletMetadata.pictureUrl ? '#ffffff' : 'transparent', // Background changes based on image presence
+    color: '#000000',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+    transition: 'transform 0.3s, box-shadow 0.3s',
+    backgroundImage: dropletMetadata.pictureUrl || dropletMetadata.name ? 'none' : 'linear-gradient(120deg, #ff6ec4, #7873f5)',
+    animation: dropletMetadata.pictureUrl || dropletMetadata.name ? 'none' : 'gradientBG 15s ease infinite',
+    backgroundSize: '200% 200%',
+    '&:hover': {
+      transform: 'scale(1.03)',
+      boxShadow: '0 8px 16px rgba(0, 0, 0, 0.6)',
+    },
+  }}
+>
+  {!dropletMetadata.pictureUrl && !dropletMetadata.name && (
+    <Typography variant="h5" component="div" sx={{ color: 'white', position: 'absolute', zIndex: 1 }}>
+      Droplet Preview
+    </Typography>
+  )}
+  {dropletMetadata.pictureUrl && (
+    <img
+      src={dropletMetadata.pictureUrl}
+      alt="Droplet Preview"
+      style={{
+        width: '60%',
+        height: '50%',
+        objectFit: 'contain',
+        borderRadius: '5px',
+        marginBottom: '10px',
+        marginLeft: '10px',
+        alignContent: 'center'
+      }}
+    />
+  )}
+  <CardContent sx={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
+    <Typography variant="h6">{dropletMetadata.name}</Typography>
+    <Typography variant="body2">{dropletMetadata.description}</Typography>
+  </CardContent>
+</Card>
+
+
   <style>
     {`
-    @keyframes gradientAnimation {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
     `}
   </style>
 </Box>

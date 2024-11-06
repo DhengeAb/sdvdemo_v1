@@ -123,11 +123,31 @@ const AppBarComponent = ({ drawerOpen, drawerWidthExpanded, drawerWidthCollapsed
             </Box>
           )}
 
-          <IconButton onClick={handleLogout} color="inherit">
+          {/* <IconButton onClick={handleLogout} color="inherit">
             <Avatar sx={{ bgcolor: '#2e2e2e' }}>
               <AccountCircleIcon />
             </Avatar>
-          </IconButton>
+          </IconButton> */}
+          <IconButton onClick={handleMenuOpen} color="inherit">
+  <Avatar sx={{ bgcolor: '#2e2e2e' }}>
+    <AccountCircleIcon />
+  </Avatar>
+</IconButton>
+
+<Menu
+  anchorEl={anchorEl}
+  open={Boolean(anchorEl)}
+  onClose={handleMenuClose}
+  PaperProps={{
+    style: {
+      color: '#2e2e2e',
+      backgroundColor: '#ffffff',
+    },
+  }}
+>
+  <MenuItem disabled>Username: admin</MenuItem>
+  <MenuItem onClick={handleLogout}>Logout</MenuItem>
+</Menu>
         </Toolbar>
       </AppBar>
 
