@@ -937,7 +937,7 @@ const handleJsonEdit = (edit) => {
 
 
         {/* Side Navigation Pane */}
-        <Box sx={{ width: '20%', backgroundColor: '#252526', padding: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ width: '30%', backgroundColor: '#252526', padding: 1, display: 'flex', flexDirection: 'column' }}>
           <Typography variant="h6" sx={{ color: '#9cdcfe', padding: 1 }}>Droplet Builder</Typography>
 
           {/* Metadata Section */}
@@ -989,7 +989,7 @@ const handleJsonEdit = (edit) => {
                   }}
                   onClick={() => toggleExpansion('api', api.UUID)}
                 >
-                  <Typography sx={{ flexGrow: 1, color: '#ffffff' }}>{api.API_Name}</Typography>
+                  <Typography sx={{ flexGrow: 1, color: '#ffffff' }}>{api.vss_signal}</Typography>
                   <IconButton sx={{ color: '#ffffff' }}>{expandedAPIs[api.UUID] ? <ChevronDownIcon /> : <ChevronRightIcon />}</IconButton>
                 </Box>
                 {/* <IconButton onClick={() => isItemSelected('api', api.UUID) ? removeItemFromSelected('api', api.UUID) : addItemToSelected('api', api)} sx={{ color: '#ffffff', marginLeft: 1 }}>
@@ -1087,7 +1087,7 @@ const handleJsonEdit = (edit) => {
 {/* JSON Viewer and Tree Visualization */}
 <Box
   sx={{
-    width: showTreeView ? '55%' : '55%',
+    width: showTreeView ? '50%' : '50%',
     height: showTreeView ? '100vh' : 'auto',
     padding: showTreeView ? 0 : 2,
     backgroundColor: '#1e1e1e',
@@ -1154,7 +1154,7 @@ const handleJsonEdit = (edit) => {
 </Box>
 </Box>
 
-<Box sx={{  width: '25%', backgroundColor: '#2a2a2a', display: 'flex', flexDirection: 'column', padding: 1 }}>
+<Box sx={{  width: '30%', backgroundColor: '#2a2a2a', display: 'flex', flexDirection: 'column', padding: 1 }}>
           {/* Top Card - Droplet Image, Name, Description */}
           <Box
   sx={{
@@ -1282,9 +1282,11 @@ const handleJsonEdit = (edit) => {
     background: 'linear-gradient(19deg, #21D4FD 0%, #B721FF 100%)',
     backgroundSize: '400% 400%',
     animation:  'gradientAnimation 6s ease infinite',
+    height:'100%'
 }}>
     <Card sx={{ 
         flexGrow: 1, 
+        height:'100%',
         backgroundColor: '#333',
         color: '#ffffff',
         borderRadius: '10px',
