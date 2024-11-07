@@ -755,46 +755,99 @@ const handleJsonEdit = (edit) => {
 
 
 
-  const renderDescriptionBox = (item, type, valueInput, isExpanded) => (
-    <Fade in={isExpanded}>
-      <Box
-        sx={{
-          position: 'absolute',
-          left: '350px', // Adjusted to make sure it aligns with the left pane
-          top: '0',
-          width: '500px',
-          height: '500px',
-          backgroundColor: '#2e2e2e',
-          borderRadius: '8px',
-          padding: '20px',
-          boxShadow: '0px 4px 12px rgba(0,0,0,0.4)',
-          zIndex: 10,
-          color: '#c5c5c5',
-          display: isExpanded ? 'block' : 'none',
-        }}
-      >
-        <Typography variant="body2">Description: {item.description}</Typography>
-        <Typography variant="body2">Data Type: {item.dataType}</Typography>
-        <Typography variant="body2">UUID: {item.UUID}</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Value"
-            value={valueInput[item.UUID] || ''}
-            onChange={(e) => handleValueChange(type, item.UUID, e.target.value)}
-            sx={{ backgroundColor: '#ffffff', borderRadius: '5px' }}
-          />
-<IconButton
-  onClick={() => isItemSelected(type, item.UUID) ? removeItemFromSelected(type, item.UUID) : addItemToSelected(type, item)}
-  sx={{ color: '#ffffff', marginLeft: 1 }}
->
-  {isItemSelected(type, item.UUID) ? <RemoveIcon /> : <AddIcon />}
-</IconButton>
-        </Box>
+//   const renderDescriptionBox = (item, type, valueInput, isExpanded) => (
+//     <Fade in={isExpanded}>
+//       <Box
+//         sx={{
+//           position: 'absolute',
+//           left: '350px', // Adjusted to make sure it aligns with the left pane
+//           top: '0',
+//           width: '500px',
+//           height: '500px',
+//           backgroundColor: '#2e2e2e',
+//           borderRadius: '8px',
+//           padding: '20px',
+//           boxShadow: '0px 4px 12px rgba(0,0,0,0.4)',
+//           zIndex: 10,
+//           color: '#c5c5c5',
+//           display: isExpanded ? 'block' : 'none',
+//         }}
+//       >
+//         <Typography variant="body1">VSS Signal: {item.vss_signal}</Typography>
+//         <Typography variant="body2">Description: {item.description}</Typography>
+//         <Typography variant="body2">Data Type: {item.dataType}</Typography>
+//         <Typography variant="body2">UUID: {item.UUID}</Typography>
+//         <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
+//           <TextField
+//             fullWidth
+//             variant="outlined"
+//             label="Value"
+//             value={valueInput[item.UUID] || ''}
+//             onChange={(e) => handleValueChange(type, item.UUID, e.target.value)}
+//             sx={{ backgroundColor: '#ffffff', borderRadius: '5px' }}
+//           />
+// <IconButton
+//   onClick={() => isItemSelected(type, item.UUID) ? removeItemFromSelected(type, item.UUID) : addItemToSelected(type, item)}
+//   sx={{ color: '#ffffff', marginLeft: 1 }}
+// >
+//   {isItemSelected(type, item.UUID) ? <RemoveIcon /> : <AddIcon />}
+// </IconButton>
+//         </Box>
+//       </Box>
+//     </Fade>
+//   );
+
+const renderDescriptionBox = (item, type, valueInput, isExpanded) => (
+  <Fade in={isExpanded} style={{ transitionDelay: isExpanded ? '500ms' : '0ms' }}>
+    <Box
+      sx={{
+        position: 'absolute',
+        left: { xs: '50%', sm: '1px' }, // Ensures it starts right at the edge of a 350px-wide left pane
+        transform: { sm: 'translateX(100%)' }, // Pushes the box to the right of the left pane
+        top: 0,
+        width: { xs: '90%', sm: '500px' },
+        maxHeight: '500px',
+        backgroundColor: 'background.paper',
+        borderRadius: '8px',
+        padding: '20px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+        zIndex: 10,
+        color: 'text.primary',
+        overflowY: 'auto',
+        transition: 'all 0.3s ease-out',
+      }}
+    >
+      <Typography variant="h6" color="primary" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        VSS Signal: {item.vss_signal}
+      </Typography>
+      <Typography variant="subtitle1">Description: {item.description}</Typography>
+      <Typography variant="body2">Data Type: {item.dataType}</Typography>
+      <Typography variant="body2">Possible Values: {item.value}</Typography>
+      <Typography variant="body2">UUID: {item.UUID}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Value"
+          value={valueInput[item.UUID] || ''}
+          onChange={(e) => handleValueChange(type, item.UUID, e.target.value)}
+          sx={{ backgroundColor: 'background.default', borderRadius: '5px' }}
+        />
+        <IconButton
+          onClick={() => isItemSelected(type, item.UUID) ? removeItemFromSelected(type, item.UUID) : addItemToSelected(type, item)}
+          sx={{ color: 'primary.main', ml: 1 }}
+        >
+          {isItemSelected(type, item.UUID) ? <RemoveIcon /> : <AddIcon />}
+        </IconButton>
       </Box>
-    </Fade>
-  );
+    </Box>
+  </Fade>
+);
+
+
+
+
+
 
   const renderMetadataBox = () => (
     <Fade in={isMetadataExpanded}>
@@ -989,7 +1042,7 @@ const handleJsonEdit = (edit) => {
                   }}
                   onClick={() => toggleExpansion('api', api.UUID)}
                 >
-                  <Typography sx={{ flexGrow: 1, color: '#ffffff' }}>{api.vss_signal}</Typography>
+                  <Typography sx={{ flexGrow: 1, color: '#ffffff' }}>{api.API_Name}</Typography>
                   <IconButton sx={{ color: '#ffffff' }}>{expandedAPIs[api.UUID] ? <ChevronDownIcon /> : <ChevronRightIcon />}</IconButton>
                 </Box>
                 {/* <IconButton onClick={() => isItemSelected('api', api.UUID) ? removeItemFromSelected('api', api.UUID) : addItemToSelected('api', api)} sx={{ color: '#ffffff', marginLeft: 1 }}>
@@ -1300,7 +1353,7 @@ const handleJsonEdit = (edit) => {
     }}>
         <CardContent>
             <Typography variant="h6" gutterBottom>Actions, Triggers, Conditions</Typography>
-            <Box sx={{ width: '100%', height: '60vh' }}>
+            <Box sx={{ width: '100%', height: '100vh' }}>
                 <Tree
                     data={getDynamicTreeData()}
                     orientation="vertical"
